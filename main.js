@@ -1,6 +1,7 @@
-// Главный процесс: окно приложения и жизненный цикл
-const { app, BrowserWindow } = require('electron');
+// Главный процесс: окно приложения, жизненный цикл и обработчики IPC
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -14,6 +15,16 @@ function createWindow() {
   });
   win.loadFile('index.html');
 }
+
+// Задание 3: чтение каталога выполняется только в главном процессе
+ipcMain.handle('list-dir', async (event, dir) => {
+  const fullPath = path.resolve(dir);
+  const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
+  return {
+    path: fullPath,
+    entries: entries.map(e => ({ name: e.name, isDir: e.isDirectory() }))
+  };
+});
 
 app.whenReady().then(() => {
   createWindow();
